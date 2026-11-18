@@ -14,6 +14,7 @@ data class GestureSettingsData(
     val doubleTap: GestureAction,
     val longPress: GestureAction,
     val homeButton: GestureAction,
+    val legacy: Boolean,
 )
 
 class GestureSettings internal constructor(
@@ -28,6 +29,7 @@ class GestureSettings internal constructor(
             doubleTap = it.gesturesDoubleTap,
             longPress = it.gesturesLongPress,
             homeButton = it.gesturesHomeButton,
+            legacy = it.gesturesLegacy,
         )
     }.distinctUntilChanged()
 ) {
@@ -50,6 +52,9 @@ class GestureSettings internal constructor(
         .distinctUntilChanged()
 
     val homeButton: Flow<GestureAction> = dataStore.data.map { it.gesturesHomeButton }
+        .distinctUntilChanged()
+
+    val legacy: Flow<Boolean> = dataStore.data.map { it.gesturesLegacy }
         .distinctUntilChanged()
 
     fun setSwipeDown(action: GestureAction) {
@@ -94,5 +99,10 @@ class GestureSettings internal constructor(
         }
     }
 
+    fun setLegacy(legacy: Boolean) {
+        dataStore.update {
+            it.copy(gesturesLegacy = legacy)
+        }
+    }
 
 }

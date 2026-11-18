@@ -43,6 +43,11 @@ internal object RecentsComponent : ScaffoldComponent(), KoinComponent {
 
     override val drawBackground: Boolean = false
 
+    override val isInstantAction: Boolean = true
+
+    override fun canActivateInstantly(): Boolean =
+        permissionsManager.checkPermissionOnce(PermissionGroup.Accessibility)
+
     override val isAtTop: State<Boolean?> = mutableStateOf(true)
     override val isAtBottom: State<Boolean?> = mutableStateOf(true)
 

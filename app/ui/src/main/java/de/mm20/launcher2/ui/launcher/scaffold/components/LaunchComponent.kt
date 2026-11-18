@@ -24,6 +24,8 @@ internal class LaunchComponent(
 ): ScaffoldComponent() {
     override val showSearchBar = false
 
+    override val isInstantAction: Boolean = true
+
     override val isAtTop: State<Boolean?> = mutableStateOf(true)
     override val isAtBottom: State<Boolean?> = mutableStateOf(true)
 

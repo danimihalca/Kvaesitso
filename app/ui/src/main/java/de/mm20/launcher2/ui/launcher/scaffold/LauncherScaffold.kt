@@ -192,6 +192,12 @@ internal data class ScaffoldConfiguration(
      */
     val finishOnBack: Boolean = false,
     val darkSearchBar: Boolean = false,
+    /**
+     * If true, gestures that only trigger an action (see [ScaffoldComponent.isInstantAction])
+     * are activated instantly, as in launcher versions before 1.37, instead of using
+     * drag and transition animations.
+     */
+    val legacyGestures: Boolean = false,
 ) {
     val searchBarTap = ScaffoldGesture(
         component = searchComponent,
@@ -256,6 +262,10 @@ internal class LauncherScaffoldState(
     private val velocityThreshold: Float,
     private val maxSearchBarOffset: Float,
     private val onHapticFeedback: (HapticFeedbackType) -> Unit,
+    /**
+     * Runs the given block in a coroutine scope that outlives the current gesture.
+     */
+    private val launchInScope: (suspend () -> Unit) -> Unit = {},
     initialGesture: Gesture? = null,
     initialIsLocked: Boolean = false,
     initialIsSearchBarHidden: Boolean = false,
@@ -482,14 +492,87 @@ internal class LauncherScaffoldState(
         private set
 
     suspend fun onDragStarted() {
+        resetLegacyDrag()
         if (isLocked || currentZOffset > 0f) return
         isDragged = true
         offsetAnimatable.stop()
     }
 
+    /**
+     * Distance travelled by the current drag, used for instant (legacy) swipe gestures.
+     */
+    private var legacyOffset = Offset.Zero
+
+    /**
+     * True if the current drag has already triggered an instant (legacy) action. The remaining
+     * drag events are ignored until the drag ends.
+     */
+    private var legacyActivated = false
+    private var isActivatingInstantly = false
+
+    private fun resetLegacyDrag() {
+        legacyOffset = Offset.Zero
+        legacyActivated = false
+    }
+
+    /**
+     * Whether the given gesture should trigger its component instantly, without animations.
+     */
+    private fun isInstantGesture(gesture: Gesture): Boolean {
+        if (!config.legacyGestures) return false
+        val component = config[gesture]?.component ?: return false
+        return component.isInstantAction && component.canActivateInstantly()
+    }
+
+    private suspend fun activateInstantly(component: ScaffoldComponent) {
+        if (isActivatingInstantly) return
+        isActivatingInstantly = true
+        try {
+            withContext(NonCancellable) {
+                component.onPreActivate(this@LauncherScaffoldState)
+                component.onActivate(this@LauncherScaffoldState)
+                component.onDismiss(this@LauncherScaffoldState)
+            }
+        } finally {
+            isActivatingInstantly = false
+        }
+    }
+
+    /**
+     * Legacy (pre 1.37) swipe handling: As soon as the finger has travelled far enough in one
+     * direction, the action is triggered right away. Nothing is drawn while swiping.
+     *
+     * @return true if the drag event was consumed, false if it should be handled by the regular
+     * gesture handling.
+     */
+    private fun onLegacyDrag(offset: Offset): Boolean {
+        if (!config.legacyGestures || currentGesture != null) return false
+        if (legacyActivated) return true
+
+        legacyOffset += offset
+
+        val gesture = getSwipeDirection(config, legacyOffset)?.takeIf { isInstantGesture(it) }
+            ?: return false
+
+        val (distance, crossDistance) = when (gesture) {
+            Gesture.SwipeUp -> -legacyOffset.y to legacyOffset.x.absoluteValue
+            Gesture.SwipeDown -> legacyOffset.y to legacyOffset.x.absoluteValue
+            Gesture.SwipeLeft -> -legacyOffset.x to legacyOffset.y.absoluteValue
+            Gesture.SwipeRight -> legacyOffset.x to legacyOffset.y.absoluteValue
+            else -> return false
+        }
+
+        if (distance >= rubberbandThreshold && distance > crossDistance * 2f) {
+            legacyActivated = true
+            val component = config[gesture]?.component ?: return true
+            launchInScope { activateInstantly(component) }
+        }
+        return true
+    }
 
     fun onDrag(offset: Offset) {
         if (isLocked || currentZOffset > 0f) return
+        if (onLegacyDrag(offset)) return
         if (currentGesture == null || (!isSettledOnSecondaryPage && currentOffset.x.absoluteValue <= touchSlop && currentOffset.y.absoluteValue <= touchSlop)) {
             currentGesture = getSwipeDirection(config, offset)
         }
@@ -569,6 +652,7 @@ internal class LauncherScaffoldState(
      * @param disallowPageChange If true, the page will not change even if the velocity is over the threshold.
      */
     suspend fun onDragStopped(velocity: Velocity, disallowPageChange: Boolean = false) {
+        resetLegacyDrag()
         isDragged = false
         if (isLocked || currentZOffset > 0f) return
         val velocity = when {
@@ -792,6 +876,11 @@ internal class LauncherScaffoldState(
         val component = config[gesture]?.component ?: return
 
         if (component.hapticFeedback) onHapticFeedback(HapticFeedbackType.LongPress)
+
+        if (isInstantGesture(gesture)) {
+            activateInstantly(component)
+            return
+        }
 
         if (component is SearchComponent && gesture != Gesture.TapSearchBar) {
             openSearch()
@@ -1036,6 +1125,7 @@ internal fun LauncherScaffold(
                             onHapticFeedback = {
                                 hapticFeedback.performHapticFeedback(it)
                             },
+                            launchInScope = { block -> scope.launch { block() } },
                             initialGesture = it[0] as Gesture?,
                             initialIsSearchBarHidden = it[1] as Boolean,
                             initialIsLocked = it[2] as Boolean,
@@ -1052,7 +1142,8 @@ internal fun LauncherScaffold(
                     maxSearchBarOffset = maxSearchBarOffset,
                     onHapticFeedback = {
                         hapticFeedback.performHapticFeedback(it)
-                    }
+                    },
+                    launchInScope = { block -> scope.launch { block() } },
                 )
             }
 

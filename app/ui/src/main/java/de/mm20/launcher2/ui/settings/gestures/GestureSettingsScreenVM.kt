@@ -51,6 +51,12 @@ internal class GestureSettingsScreenVM : ViewModel(), KoinComponent {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
     val homeButton = gestureSettings.homeButton
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    val legacyGestures = gestureSettings.legacy
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    fun setLegacyGestures(legacy: Boolean) {
+        gestureSettings.setLegacy(legacy)
+    }
 
     fun setSwipeDown(action: GestureAction, searchable: SavableSearchable?) {
         saveShortcut(searchable)

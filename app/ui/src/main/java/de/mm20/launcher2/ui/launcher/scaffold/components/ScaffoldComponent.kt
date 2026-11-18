@@ -30,6 +30,20 @@ internal abstract class ScaffoldComponent {
     open val hapticFeedback: Boolean = true
 
     /**
+     * True if this component only triggers an action (e.g. a system action or launching an app)
+     * and has no page of its own that the user needs to see. With legacy gestures enabled, such
+     * components are activated instantly, without any drag or transition animation.
+     */
+    open val isInstantAction: Boolean = false
+
+    /**
+     * Whether the action can currently be performed without showing the component, e.g. because
+     * a required permission is missing and the component needs to be shown to explain that.
+     * Only relevant if [isInstantAction] is true.
+     */
+    open fun canActivateInstantly(): Boolean = true
+
+    /**
      * Whether this component can be interacted with the IME.
      * If true, IME insets will be passed to the component.
      * If false, IME insets will be ignored, to avoid unnecessary animations.

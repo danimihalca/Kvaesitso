@@ -403,6 +403,7 @@ abstract class SharedLauncherActivity(
                                         showNavBar = !hideNav,
                                         darkSearchBar = darkSearchBar,
                                         wallpaperBlurRadius = if (wallpaperBlur) wallpaperBlurRadius.dp else 0.dp,
+                                        legacyGestures = gestures.legacy,
                                     )
 
                                     if (config.isUseless()) config.copy(

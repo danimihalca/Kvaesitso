@@ -42,6 +42,7 @@ import de.mm20.launcher2.ui.component.preferences.GuardedPreference
 import de.mm20.launcher2.ui.component.preferences.ListPreference
 import de.mm20.launcher2.ui.component.preferences.PreferenceCategory
 import de.mm20.launcher2.ui.component.preferences.PreferenceScreen
+import de.mm20.launcher2.ui.component.preferences.SwitchPreference
 import de.mm20.launcher2.ui.ktx.toPixels
 import kotlinx.serialization.Serializable
 
@@ -196,6 +197,17 @@ fun GestureSettingsScreen() {
                         widgetOptions = widgetOptions,
                     )
                 }
+            }
+        }
+        item {
+            PreferenceCategory {
+                val legacyGestures by viewModel.legacyGestures.collectAsStateWithLifecycle(null)
+                SwitchPreference(
+                    title = stringResource(R.string.preference_gestures_legacy),
+                    summary = stringResource(R.string.preference_gestures_legacy_summary),
+                    value = legacyGestures == true,
+                    onValueChanged = viewModel::setLegacyGestures,
+                )
             }
         }
     }

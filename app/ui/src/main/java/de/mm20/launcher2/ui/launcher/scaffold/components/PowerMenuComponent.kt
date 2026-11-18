@@ -52,6 +52,11 @@ internal object PowerMenuComponent : ScaffoldComponent(), KoinComponent {
 
     override val drawBackground: Boolean = false
 
+    override val isInstantAction: Boolean = true
+
+    override fun canActivateInstantly(): Boolean =
+        permissionsManager.checkPermissionOnce(PermissionGroup.Accessibility)
+
     private val interpolator = PathInterpolator(0f, 0f, 0f, 1f)
 
     @Composable

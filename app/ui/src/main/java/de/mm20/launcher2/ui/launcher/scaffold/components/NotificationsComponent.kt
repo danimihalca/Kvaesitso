@@ -40,6 +40,8 @@ internal object NotificationsComponent : ScaffoldComponent(), KoinComponent {
 
     override val drawBackground: Boolean = false
 
+    override val isInstantAction: Boolean = true
+
     private val interpolator = PathInterpolator(0f, 0f, 0f, 1f)
 
     @Composable

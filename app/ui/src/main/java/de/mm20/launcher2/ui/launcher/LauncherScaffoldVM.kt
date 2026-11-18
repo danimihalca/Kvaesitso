@@ -125,6 +125,7 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
                 longPressApp = apps.find { it.key == longPressAppKey },
                 doubleTapApp = apps.find { it.key == doubleTapAppKey },
                 homeButtonApp = apps.find { it.key == homeButtonAppKey },
+                legacy = settings.legacy,
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 }
@@ -144,5 +145,6 @@ data class GestureState(
     val longPressApp: SavableSearchable? = null,
     val doubleTapApp: SavableSearchable? = null,
     val homeButtonApp: SavableSearchable? = null,
+    val legacy: Boolean = false,
 )
 

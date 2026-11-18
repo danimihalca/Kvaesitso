@@ -158,6 +158,11 @@ data class LauncherSettingsData internal constructor(
     val gesturesDoubleTap: GestureAction = GestureAction.ScreenLock,
     val gesturesLongPress: GestureAction = GestureAction.NoAction,
     val gesturesHomeButton: GestureAction = GestureAction.NoAction,
+    /**
+     * Legacy (v1.36) gesture behavior: system actions (notifications, quick settings, ...)
+     * are triggered instantly, without a drag animation.
+     */
+    val gesturesLegacy: Boolean = false,
 
     val animationsCharging: Boolean = true,
 

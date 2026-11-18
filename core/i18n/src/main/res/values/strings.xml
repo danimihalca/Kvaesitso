@@ -818,6 +818,8 @@
     <string name="preference_gesture_double_tap">Double tap</string>
     <string name="preference_gesture_long_press">Long press</string>
     <string name="preference_gesture_home_button">Home button/gesture</string>
+    <string name="preference_gestures_legacy">Legacy gesture behavior</string>
+    <string name="preference_gestures_legacy_summary">Trigger system actions (notifications, quick settings, recents, power menu, screen lock) and app shortcuts instantly, without a drag animation</string>
     <string name="gesture_action_none">Do nothing</string>
     <string name="gesture_action_category_launcher">Launcher pages</string>
     <string name="gesture_action_category_system">System actions</string>
